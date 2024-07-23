@@ -107,8 +107,8 @@ $$
 $$
 
 and a new loss function $\text{Loss}(\Delta\mathbf{x})$ in terms of these variables. Given a minimal distance between the nodes $0 <\varepsilon \le \frac{1}{n+1}$, we define the constraints
-$$
 
+$$
     \varepsilon \le \Delta x_{i'} \le 1-2\varepsilon, \quad i' = 1, \ldots, n,
 $$
 
