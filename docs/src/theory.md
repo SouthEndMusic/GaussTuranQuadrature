@@ -145,3 +145,6 @@ and the final constraint
     n\varepsilon\le \sum_{i'=1}^n \Delta x_{i'} \le 1-\varepsilon.
 \end{equation}
 ```
+
+!!! note
+    Since we solve this problem with `Optim.IPNewton` which requires a hessian of the loss function, we actually need the functions $\varphi_j$ to be $2s + 2$ times continuously differentiable.
