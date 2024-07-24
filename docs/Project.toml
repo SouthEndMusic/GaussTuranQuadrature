@@ -1,0 +1,3 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+GaussTuranQuadrature = "a2ac7212-e207-4650-a7a4-34ab1fb4472f"
