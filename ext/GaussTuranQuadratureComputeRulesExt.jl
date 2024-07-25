@@ -1,12 +1,11 @@
 module GaussTuranQuadratureComputeRulesExt
+using GaussTuranQuadrature
 using Base.Threads
 if isdefined(Base, :get_extension)
-    using Integrals
     using Optim
     using TaylorDiff
     using PreallocationTools
 else
-    using ..Integrals
     using ..Optim
     using ..TaylorDiff
     using ..PreallocationTools
@@ -78,7 +77,7 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
 
     # Evaluating ϕ derivatives
     for (i, x) in enumerate(X)
-        Threads.@threads for j = 1:N
+        Threads.@threads for j in 1:N
             M_upper[j, i:n:N] .= derivatives(x -> ϕ(x, j), x, 1, Val(2s + 1)).value
         end
         Threads.@threads for j in (N + 1):(N + n)
@@ -113,12 +112,20 @@ struct GaussTuranResult{T, RType, dϕType}
     dϕ::dϕType
 
     function GaussTuranResult(res, cache::GaussTuranCache{T}, dϕ) where {T}
-        (; A_buffer, s, n, N, a) = cache
+        (; A_buffer, s, n, N) = cache
         X = cumsum(res.minimizer)
         dϕ.f(res.minimizer)
         A = reshape(A_buffer[T[], N], (n, 2s + 1))
         new{T, typeof(res), typeof(dϕ)}(X, A, res, cache, dϕ)
     end
+end
+
+function GaussTuranRule(res, cache::GaussTuranCache{T}, dϕ) where {T}
+    (; A_buffer, s, n, N) = cache
+    X = cumsum(res.minimizer)
+    dϕ.f(res.minimizer)
+    A = reshape(A_buffer[T[], N], (n, 2s + 1))
+    GaussTuranQuadrature.GaussTuranRule(A, X)
 end
 
 """
@@ -148,6 +155,8 @@ For details about the method see (_reference to theory_).
   - `ϕ`: Function with signature `ϕ(x::T, j)::T` that returns ϕⱼ at x
   - `n`: The number of nodes in the quadrature rule
   - `s`: Determines the highest order derivative required from the functions ϕⱼ, currently 2(s + 1)
+  - `rhs`: The integrals of the functions ϕⱼ weighted by `w`. The element type of this vector (<: AbstractFloat)
+    deterimnes the float type used for the computations. Use e.g. `DoubleFloats.Double64`` or `BigFloat` (slow!) for high accuracy results.
 
 ## Keyword Arguments
 
@@ -156,20 +165,19 @@ For details about the method see (_reference to theory_).
   - `X₀`: The initial guess for the nodes. Defaults to uniformly distributed over (a, b).
   - `integration_kwargs`: The key word arguments passed to `solve` for integrating w * fⱼ
   - `optimization_kwargs`: The key word arguments passed to `Optim.Options` for the minization problem
-        for finding X.
-  - `T`: The float type used for the computations. Use e.g. `DoubleFloats.Double64`` or `BigFloat` (slow!) for high accuracy results.
+    for finding X.
 """
-function GaussTuranComputeRule(
+function GaussTuranQuadrature.GaussTuranComputeRule(
         ϕ,
-        n,
-        s;
+        n::Integer,
+        s::Integer,
+        rhs::AbstractVector{T};
         w = DEFAULT_w,
         ε = nothing,
         X₀ = nothing,
         integration_kwargs::NamedTuple = (;),
-        optimization_options::Optim.Options = Optim.Options(),
-        T::Type{<:AbstractFloat} = Float64
-)
+        optimization_options::Optim.Options = Optim.Options()
+) where {T <: AbstractFloat}
     # Initial guess
     if isnothing(X₀)
         X₀ = collect(range(zero(T), one(T), length = n + 2)[2:(end - 1)])
@@ -195,8 +203,8 @@ function GaussTuranComputeRule(
         res.u[]
     end
     N = (2s + 1) * n
-    rhs_upper = [integrate(j) for j in 1:N]
-    rhs_lower = [integrate(j) for j in (N + 1):(N + n)]
+    rhs_upper = rhs[1:N]
+    rhs_lower = rhs[(N + 1):(N + n)]
 
     # Solving constrained non linear problem for ΔX, see
     # https://julianlsolvers.github.io/Optim.jl/stable/examples/generated/ipnewton_basics/
@@ -233,7 +241,8 @@ function GaussTuranComputeRule(
     # Solve for the quadrature rule by minimizing the loss function
     res = Optim.optimize(dϕ, constraints, T.(ΔX₀), IPNewton(), optimization_options)
 
-    GaussTuranResult(res, cache, dϕ)
+    # Return the computed rule for the interval (0, 1) and the optimizer stats
+    GaussTuranRule(res, cache, dϕ), res
 end
 
 end # module IntegralsGaussTuranExt

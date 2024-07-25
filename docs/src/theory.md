@@ -1,4 +1,5 @@
 # Gauss-Turán quadrature rules
+
 ## Definition
 
 A Gauss-Turán quadrature rule is an operation on a function $f : (a,b) \rightarrow \mathbb{R}$ of the form
@@ -39,7 +40,6 @@ The value $s \in \mathbb{N}$ determines the highest order derivative ($2s$) that
 
 Say we have a quadrature rule as defined in the previous section, but now we want to use it to integrate a function over the interval $(a,b)$. By integral transformation rules we have that
 
-
 ```math
 \begin{align}
     \int_a^b f(t)\text{d}t &=& (b - a) \int_0^1 f(a + (b-a)x)\text{d}x \\
@@ -47,10 +47,11 @@ Say we have a quadrature rule as defined in the previous section, but now we wan
 \end{align}
 ```
 
-where $\tilde{f}(x) = f(a + (b-a)x)$. We can interpret $f \mapsto (b-a)I(\tilde{f})$ as a quadrature rule with 
-- weights multiplied by $b-a$;
-- transformed nodes $a + (b-a)x_i$;
-- derivatives in the "direction" $b - a$.
+where $\tilde{f}(x) = f(a + (b-a)x)$. We can interpret $f \mapsto (b-a)I(\tilde{f})$ as a quadrature rule with
+
+  - weights multiplied by $b-a$;
+  - transformed nodes $a + (b-a)x_i$;
+  - derivatives in the "direction" $b - a$.
 
 ## Deriving Gauss-Turán quadrature rules
 
@@ -70,7 +71,7 @@ We reformulate (3) as a linear system
 
 where
 
-- the matrix $M(\mathbf{x})$ is of size $2(s+1)n \times (2s + 1)n$ (note that it is not square!) and consisting of the evaluations of the derivatives of the $\varphi_j$:
+  - the matrix $M(\mathbf{x})$ is of size $2(s+1)n \times (2s + 1)n$ (note that it is not square!) and consisting of the evaluations of the derivatives of the $\varphi_j$:
 
 ```math
 \begin{equation}
@@ -78,8 +79,8 @@ M(\mathbf{x})_{j,k(m, i)} = \varphi_j^{(m-1)}(x_i);
 \end{equation}
 ```
 
-- the column vector $\mathbf{w} = (w_{k(m, i)})$ is of length $(2s+1)n$;
-- the column vector $\mathbf{b}$ is of length $2(s+1)n$ and consisting of the integrals of the $\varphi_j$:
+  - the column vector $\mathbf{w} = (w_{k(m, i)})$ is of length $(2s+1)n$;
+  - the column vector $\mathbf{b}$ is of length $2(s+1)n$ and consisting of the integrals of the $\varphi_j$:
 
 ```math
 \begin{equation}
@@ -115,7 +116,7 @@ fully expressed in terms of the nodes $\mathbf{x}$.
 
 We want to solve for the quadrature rule by approximating the root of the above loss function with a Newton solver. However, a naive implementation of this can lead to numerical problems, because the different nodes can converge towards eachother which makes the matrix $M_\text{lower}(\mathbf{x})$ singular. Furthermore, we want the nodes to stay within the interval $(0,1)$.
 
-To this end we define the new variables 
+To this end we define the new variables
 
 ```math
 \begin{equation}
@@ -148,4 +149,5 @@ and the final constraint
 ```
 
 !!! note
+    
     Since we solve this problem with `Optim.IPNewton` which requires a hessian of the loss function, we actually need the functions $\varphi_j$ to be $2s + 2$ times continuously differentiable.

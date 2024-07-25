@@ -1,3 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GaussTuranQuadrature = "a2ac7212-e207-4650-a7a4-34ab1fb4472f"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
+TaylorDiff = "b36ab563-344f-407b-a36a-4f200bebf99c"
