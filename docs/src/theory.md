@@ -1,4 +1,5 @@
 # Gauss-Turán quadrature rules
+## Definition
 
 A Gauss-Turán quadrature rule is an operation on a function $f : (a,b) \rightarrow \mathbb{R}$ of the form
 

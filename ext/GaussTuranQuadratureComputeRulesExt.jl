@@ -147,7 +147,7 @@ For details about the method see (_reference to theory_).
 
   - `ϕ`: Function with signature `ϕ(x::T, j)::T` that returns ϕⱼ at x
   - `n`: The number of nodes in the quadrature rule
-  - `s`: Determines the highest order derivative required from the functions fⱼ, currently 2(s + 1)
+  - `s`: Determines the highest order derivative required from the functions ϕⱼ, currently 2(s + 1)
 
 ## Keyword Arguments
 
