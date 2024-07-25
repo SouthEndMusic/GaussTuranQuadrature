@@ -100,26 +100,6 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
     sqrt(out)
 end
 
-"""
-    Callable result object of the Gauss-Turán quadrature rule
-    computation algorithm.
-"""
-struct GaussTuranResult{T, RType, dϕType}
-    X::Vector{T}
-    A::Matrix{T}
-    res::RType
-    cache::GaussTuranCache
-    dϕ::dϕType
-
-    function GaussTuranResult(res, cache::GaussTuranCache{T}, dϕ) where {T}
-        (; A_buffer, s, n, N) = cache
-        X = cumsum(res.minimizer)
-        dϕ.f(res.minimizer)
-        A = reshape(A_buffer[T[], N], (n, 2s + 1))
-        new{T, typeof(res), typeof(dϕ)}(X, A, res, cache, dϕ)
-    end
-end
-
 function GaussTuranRule(res, cache::GaussTuranCache{T}, dϕ) where {T}
     (; A_buffer, s, n, N) = cache
     X = cumsum(res.minimizer)
@@ -194,14 +174,6 @@ function GaussTuranQuadrature.GaussTuranComputeRule(
         @assert 0 < ε ≤ 1 / (n + 1)
     end
     ε = T(ε)
-
-    # Integrate w * ϕ
-    integrand = (out, x, j) -> out[] = w(x) * ϕ(x, j)
-    function integrate(j)
-        prob = IntegralProblem{true}(integrand, (zero(T), one(T)), j)
-        res = solve(prob, QuadGKJL(); integration_kwargs...)
-        res.u[]
-    end
     N = (2s + 1) * n
     rhs_upper = rhs[1:N]
     rhs_lower = rhs[(N + 1):(N + n)]
