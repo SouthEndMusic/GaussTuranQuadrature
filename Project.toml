@@ -6,12 +6,11 @@ version = "0.1.0"
 TaylorDiff = "b36ab563-344f-407b-a36a-4f200bebf99c"
 
 [weakdeps]
-Integrals = "de52edbc-65ea-441a-8357-d3a637375a31"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 
 [extensions]
-GaussTuranQuadratureComputeRulesExt = ["Integrals", "Optim", "PreallocationTools"]
+GaussTuranQuadratureComputeRulesExt = ["Optim", "PreallocationTools"]
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
