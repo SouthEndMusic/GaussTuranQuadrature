@@ -22,3 +22,10 @@ end
 evaluation = I(f)
 error = abs(evaluation - (1 - cos(1)))
 ```
+
+Other finite domains $(a,b)$ can also be used.
+
+```@example 1
+I = GaussTuranRule(n, s; domain = (0, π/2))
+I(f)
+```
