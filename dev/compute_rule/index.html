@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Computing quadratures · GaussTuranQuadrature.jl</title><meta name="title" content="Computing quadratures · GaussTuranQuadrature.jl"/><meta property="og:title" content="Computing quadratures · GaussTuranQuadrature.jl"/><meta property="twitter:title" content="Computing quadratures · GaussTuranQuadrature.jl"/><meta name="description" content="Documentation for GaussTuranQuadrature.jl."/><meta property="og:description" content="Documentation for GaussTuranQuadrature.jl."/><meta property="twitter:description" content="Documentation for GaussTuranQuadrature.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">GaussTuranQuadrature.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../evaluate_rule/">Evaluating quadratures</a></li><li class="is-active"><a class="tocitem" href>Computing quadratures</a><ul class="internal"><li><a class="tocitem" href="#Computing-the-rule"><span>Computing the rule</span></a></li><li><a class="tocitem" href="#Obtaining-higher-accuracy"><span>Obtaining higher accuracy</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../theory/">Theory</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Computing quadratures</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Computing quadratures</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/SouthEndMusic/GaussTuranQuadrature.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/SouthEndMusic/GaussTuranQuadrature.jl/blob/main/docs/src/compute_rule.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Computing-Gauss-Turán-qudrature-rules"><a class="docs-heading-anchor" href="#Computing-Gauss-Turán-qudrature-rules">Computing Gauss-Turán qudrature rules</a><a id="Computing-Gauss-Turán-qudrature-rules-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-Gauss-Turán-qudrature-rules" title="Permalink"></a></h1><p>In this section we look at how to use the algorithm in <code>GaussTuranQuadrature.jl</code> to compute new quadrature rules. For the mathematical background of this algorithm see the <a href="../theory/">theory section</a>. We use the example presented in <a href="https://www.sciencedirect.com/science/article/pii/S0898122100850014?via%3Dihub">this article</a>, with the functions</p><p class="math-container">\[\begin{equation}
+    \varphi_j(x) = x^{p_j}, \quad j = 1, \ldots, 2(s + 1)n
+\end{equation}\]</p><p>where</p><p class="math-container">\[\begin{equation}
+    p_j =
+    \begin{cases}
+        \frac{j}{2} - 1 \text{ if $j$ is even} \\
+        \frac{j - 1}{2} - \frac{1}{3} \text{ if $j$ is odd}
+    \end{cases},
+\end{equation}\]</p><p>and the trivial weight function <span>$w(x) = 1$</span>.</p><h2 id="Computing-the-rule"><a class="docs-heading-anchor" href="#Computing-the-rule">Computing the rule</a><a id="Computing-the-rule-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-the-rule" title="Permalink"></a></h2><p>Below is some setup of the inputs for computing the rule.</p><pre><code class="language-julia hljs">using TaylorDiff: derivatives
+
+p(n, s) = [j % 2 == 0 ? j / 2 - 1 : (j - 1) / 2 - 1 / 3 for j in 1:(2 * (s + 1) * n)]
+
+n = 5
+s = 1
+
+# Powers of the input functions
+P = p(n, s)
+
+# Integrals over (0, 1) of the input functions
+rhs = @. 1 / (P + 1)
+
+# The functions themselves and their derivatives
+ϕ = (x, j) -&gt; derivatives(x -&gt; x^P[j], x, 1.0, Val(2s + 1)).value;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">#3 (generic function with 1 method)</code></pre><p>Now we can compute the rule.</p><pre><code class="language-julia hljs">using Optim
+using TaylorDiff
+using PreallocationTools
+using GaussTuranQuadrature
+
+I, res = GaussTuranComputeRule(ϕ, n, s, rhs)
+
+I</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Gauss-Turán quadrature rule on the interval (0.0, 1.0), with 5 nodes and derivatives up to order 2.
+* Nodes:
+5-element Vector{Float64}:
+ 0.0018183674053714562
+ 0.045953252552785824
+ 0.22342395164593046
+ 0.5808639413677223
+ 0.921794918354219
+* Weights:
+5×3 Matrix{Float64}:
+ 0.0121793   2.9136e-5    2.39045e-8
+ 0.0955793   0.000898476  2.00418e-5
+ 0.276105    0.00439912   0.00054227
+ 0.392025   -0.000255524  0.00162487
+ 0.224111   -0.0054717    0.000305731
+</code></pre><p>And evaluate the rule.</p><pre><code class="language-julia hljs"># Create a function which computes exp(x) once and fills a tuple of length 2s+1 with that value
+f = x -&gt; (val = Base.exp(x); ntuple(_ -&gt; val, 2s + 1))
+
+evaluation = I(f)
+error = abs(evaluation - (Base.exp(1) - 1))
+error</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4.440892098500626e-16</code></pre><p>We can also have a look at the optimization statistics.</p><pre><code class="language-julia hljs">res</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     1.639804e-12
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 0.00e+00 ≤ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 2.23e-06 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   1  (vs limit Inf)
+    Iterations:    139
+    f(x) calls:    329
+    ∇f(x) calls:   329
+</code></pre><h2 id="Obtaining-higher-accuracy"><a class="docs-heading-anchor" href="#Obtaining-higher-accuracy">Obtaining higher accuracy</a><a id="Obtaining-higher-accuracy-1"></a><a class="docs-heading-anchor-permalink" href="#Obtaining-higher-accuracy" title="Permalink"></a></h2></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../evaluate_rule/">« Evaluating quadratures</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Friday 26 July 2024 15:17">Friday 26 July 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
