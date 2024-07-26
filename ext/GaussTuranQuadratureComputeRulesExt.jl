@@ -72,7 +72,6 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
     # Evaluating ϕ derivatives
     for (i, x) in enumerate(X)
         Threads.@threads for j in 1:N
-        for j in 1:N
             M_upper[j, i:n:N] .= ϕ(x, j)
         end
         Threads.@threads for j in (N + 1):(N + n)
