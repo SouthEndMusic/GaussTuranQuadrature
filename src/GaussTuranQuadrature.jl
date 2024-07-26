@@ -4,7 +4,6 @@ module GaussTuranQuadrature
 function GaussTuranComputeRule end
 
 include("rules.jl")
-include("rule_setup.jl")
 include("rule_evaluation.jl")
 
 export GaussTuranRule, GaussTuranComputeRule
