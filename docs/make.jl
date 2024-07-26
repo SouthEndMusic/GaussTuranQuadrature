@@ -13,3 +13,5 @@ makedocs(;
         "Theory" => "theory.md"
     ]
 )
+
+deploydocs(; repo = "github.com/SouthEndMusic/GaussTuranQuadrature.jl.git")
