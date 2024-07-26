@@ -4,7 +4,9 @@ struct GaussTuranRule{
     b::xType
     W::WType # (n_nodes, n_derivs)
     X::XType
-    function GaussTuranRule(W::WType, X::XType; domain::Tuple = (0, 1)) where {WType, XType}
+    function GaussTuranRule(W::WType,
+            X::XType;
+            domain::Tuple = (0, 1)) where {WType <: AbstractMatrix, XType <: AbstractVector}
         new{WType, XType, eltype(X)}(domain[1], domain[2], W, X)
     end
 end
@@ -32,13 +34,22 @@ end
 
 n_derivs(I::GaussTuranRule) = size(I.W)[2]
 
+function GaussTuranRule(n::Int, s::Int, domain::Tuple = (0, 1))
+    key = (n, s)
+    if haskey(rules, key)
+        data = rules[(n, s)]
+        return GaussTuranRule(data.W, data.X; domain)
+    else
+        error("No tabulated rule for n = $n, s = $s.")
+    end
+end
+
 function (I::GaussTuranRule)(f)
     (; a, b, W, X) = I
-    l = b - a
+    # l = b - a
     out = zero(eltype(X))
     for (i, x) in enumerate(X)
-        derivs = derivatives(f, a + l * x, l, Val(n_derivs(I))).value
-        for (m, deriv) in enumerate(derivs)
+        for (m, deriv) in enumerate(f(x))
             out += W[i, m] * deriv
         end
     end

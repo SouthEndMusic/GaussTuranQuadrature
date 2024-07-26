@@ -3,11 +3,9 @@ using GaussTuranQuadrature
 using Base.Threads
 if isdefined(Base, :get_extension)
     using Optim
-    using TaylorDiff
     using PreallocationTools
 else
     using ..Optim
-    using ..TaylorDiff
     using ..PreallocationTools
 end
 
@@ -74,10 +72,11 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
     # Evaluating ϕ derivatives
     for (i, x) in enumerate(X)
         Threads.@threads for j in 1:N
-            M_upper[j, i:n:N] .= derivatives(x -> ϕ(x, j), x, 1, Val(2s + 1)).value
+        for j in 1:N
+            M_upper[j, i:n:N] .= ϕ(x, j)
         end
         Threads.@threads for j in (N + 1):(N + n)
-            M_lower[j - N, i:n:N] .= derivatives(x -> ϕ(x, j), x, 1, Val(2s + 1)).value
+            M_lower[j - N, i:n:N] .= ϕ(x, j)
         end
     end
 
@@ -112,7 +111,7 @@ For details about the method see (_reference to theory_).
 
 ## Inputs
 
-  - `ϕ`: Function with signature `ϕ(x::T, j)::T` that returns ϕⱼ at x
+  - `ϕ`: Function with signature `ϕ(x::T, j)::T` that returns ϕⱼ(x), ∂¹ϕⱼ(x), …, ∂²ˢϕⱼ(x)
   - `n`: The number of nodes in the quadrature rule
   - `s`: Determines the highest order derivative required from the functions ϕⱼ, currently 2(s + 1)
   - `rhs`: The integrals of the functions ϕⱼ weighted by `w`. The element type of this vector (<: AbstractFloat)

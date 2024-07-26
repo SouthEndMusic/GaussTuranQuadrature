@@ -28,6 +28,8 @@ and the trivial weight function $w(x) = 1$.
 Below is some setup of the inputs for computing the rule.
 
 ```@example 1
+using TaylorDiff: derivatives
+
 p(n, s) = [j % 2 == 0 ? j / 2 - 1 : (j - 1) / 2 - 1 / 3 for j in 1:(2 * (s + 1) * n)]
 
 n = 5
@@ -39,8 +41,8 @@ P = p(n, s)
 # Integrals over (0, 1) of the input functions
 rhs = @. 1 / (P + 1)
 
-# The functions themselves
-ϕ = (x, j) -> x^P[j];
+# The functions themselves and their derivatives
+ϕ = (x, j) -> derivatives(x -> x^P[j], x, 1.0, Val(2s + 1)).value;
 ```
 
 Now we can compute the rule.
@@ -59,7 +61,10 @@ I
 And evaluate the rule.
 
 ```@example 1
-evaluation = I(Base.exp) 
+# Create a function which computes exp(x) once and fills a tuple of length 2s+1 with that value
+f = x -> (val = Base.exp(x); ntuple(_ -> val, 2s + 1))
+
+evaluation = I(f)
 error = abs(evaluation - (Base.exp(1) - 1))
 error
 ```
