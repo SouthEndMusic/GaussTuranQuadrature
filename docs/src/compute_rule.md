@@ -17,11 +17,13 @@ where
     \begin{cases}
         \frac{j}{2} - 1 \text{ if $j$ is even} \\
         \frac{j - 1}{2} - \frac{1}{3} \text{ if $j$ is odd}
-    \end{cases}.
+    \end{cases},
 \end{equation}
 ```
 
-## Computing a rule
+and the trivial weight function $w(x) = 1$.
+
+## Computing the rule
 
 Below is some setup of the inputs for computing the rule.
 
@@ -60,6 +62,12 @@ And evaluate the rule.
 evaluation = I(Base.exp) 
 error = abs(evaluation - (Base.exp(1) - 1))
 error
+```
+
+We can also have a look at the optimization statistics.
+
+```@example 1
+res
 ```
 
 ## Obtaining higher accuracy

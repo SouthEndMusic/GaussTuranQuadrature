@@ -11,10 +11,6 @@ else
     using ..PreallocationTools
 end
 
-function DEFAULT_w(x::T)::T where {T}
-    one(T)
-end
-
 """
 Cached data for the `GaussTuranLoss!` call.
 """
@@ -28,7 +24,7 @@ struct GaussTuranCache{T}
     M_upper_buffer::LazyBufferCache{typeof(identity)}
     M_lower_buffer::LazyBufferCache{typeof(identity)}
     X_buffer::LazyBufferCache{typeof(identity)}
-    A_buffer::LazyBufferCache{typeof(identity)}
+    W_buffer::LazyBufferCache{typeof(identity)}
     function GaussTuranCache(
             n,
             s,
@@ -64,12 +60,12 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
     rhs_lower,
     M_upper_buffer,
     M_lower_buffer,
-    A_buffer,
+    W_buffer,
     X_buffer
 ) = cache
     M_upper = M_upper_buffer[ΔX, (N, N)]
     M_lower = M_lower_buffer[ΔX, (n, N)]
-    A = A_buffer[ΔX, N]
+    W = W_buffer[ΔX, N]
     X = X_buffer[ΔX, n]
 
     # Compute X from ΔX
@@ -85,15 +81,15 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
         end
     end
 
-    # Solving for A
-    A .= M_upper \ rhs_upper
+    # Solving for W
+    W .= M_upper \ rhs_upper
 
     # Computing output
     out = zero(eltype(ΔX))
     for i in eachindex(X)
         out_term = -rhs_lower[i]
-        for j in eachindex(A)
-            out_term += A[j] * M_lower[i, j]
+        for j in eachindex(W)
+            out_term += W[j] * M_lower[i, j]
         end
         out += out_term^2
     end
@@ -101,31 +97,15 @@ function GaussTuranLoss!(ϕ, ΔX::AbstractVector{T}, cache) where {T}
 end
 
 function GaussTuranRule(res, cache::GaussTuranCache{T}, dϕ) where {T}
-    (; A_buffer, s, n, N) = cache
+    (; W_buffer, s, n, N) = cache
     X = cumsum(res.minimizer)
     dϕ.f(res.minimizer)
-    A = reshape(A_buffer[T[], N], (n, 2s + 1))
-    GaussTuranQuadrature.GaussTuranRule(A, X)
+    W = reshape(W_buffer[T[], N], (n, 2s + 1))
+    GaussTuranQuadrature.GaussTuranRule(W, X)
 end
 
 """
-    Input: function f(x, d) which gives the dth derivative of f
-"""
-function (I::GaussTuranResult{T} where {T})(integrand)
-    (; X, A, cache) = I
-    (; s) = cache
-    out = zero(eltype(X))
-    for (i, x) in enumerate(X)
-        derivs = derivatives(integrand, x, 1.0, Val(2s + 1)).value
-        for (m, deriv) in enumerate(derivs)
-            out += A[i, m] * deriv
-        end
-    end
-    out
-end
-
-"""
-    GaussTuran(ϕ, n, s; w = DEFAULT_w, ε = nothing, X₀ = nothing, integration_kwargs::NamedTuple = (;), optimization_options::Optim.Options = Optim.Options(), T::Type{<:AbstractFloat} = Float64)
+    GaussTuran(ϕ, n, s; ε = nothing, X₀ = nothing, optimization_options::Optim.Options = Optim.Options())
 
 Compute a Gauss-Turán quadrature rule by solving a constrained non-linear optimization problem.
 For details about the method see (_reference to theory_).
@@ -140,10 +120,8 @@ For details about the method see (_reference to theory_).
 
 ## Keyword Arguments
 
-  - `w`: the integrand weighting function, must have signature w(x::Number)::Number. Defaults to `w(x) = 1`.
-  - `ε`: the minimum distance between nodes. Defaults to 1e-3 * (b - a) / (n + 1).
-  - `X₀`: The initial guess for the nodes. Defaults to uniformly distributed over (a, b).
-  - `integration_kwargs`: The key word arguments passed to `solve` for integrating w * fⱼ
+  - `ε`: the minimum distance between nodes. Defaults to 1e-3 * / (n + 1).
+  - `X₀`: The initial guess for the nodes. Defaults to uniformly distributed over (0, 1).
   - `optimization_kwargs`: The key word arguments passed to `Optim.Options` for the minization problem
     for finding X.
 """
@@ -152,10 +130,8 @@ function GaussTuranQuadrature.GaussTuranComputeRule(
         n::Integer,
         s::Integer,
         rhs::AbstractVector{T};
-        w = DEFAULT_w,
         ε = nothing,
         X₀ = nothing,
-        integration_kwargs::NamedTuple = (;),
         optimization_options::Optim.Options = Optim.Options()
 ) where {T <: AbstractFloat}
     # Initial guess
