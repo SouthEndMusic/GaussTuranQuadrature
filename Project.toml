@@ -9,6 +9,14 @@ PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 [extensions]
 GaussTuranQuadratureComputeRulesExt = ["Optim", "PreallocationTools"]
 
+[compat]
+Aqua = "0.8"
+Optim = "1"
+PreallocationTools = "0.4"
+SafeTestsets = "0.1"
+Test = "1.9"
+julia = "1.9"
+
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
