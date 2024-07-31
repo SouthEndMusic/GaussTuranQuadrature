@@ -1,3 +1,15 @@
+"""
+    GaussTuranRule(W::AbstractMatrix, X::AbstractVector; domain=(0,1))
+    GaussTuranRule(n::Integer, s::Integer; domain=(0,1))
+
+Construct a Gauss-Turán quadrature for the given interval either from known weights `X` and
+nodes `X` or for a fixed number of nodes `n` and derivatives `s`.
+
+    (::GaussTuranRule)(f)
+
+Evaluate the integral of the function `f` using a computed Gauss-Turán rule. `f(x)` must return
+a tuple or vector of the integrand and its first `2s+1` derivatives.
+"""
 struct GaussTuranRule{
     WType <: AbstractMatrix, XType <: AbstractVector, xType <: AbstractFloat}
     a::xType
@@ -34,13 +46,13 @@ end
 
 n_derivs(I::GaussTuranRule) = size(I.W)[2]
 
-function GaussTuranRule(n::Int, s::Int; domain::Tuple{<:Number, <:Number} = (0, 1))
+function GaussTuranRule(n::Integer, s::Integer; domain::Tuple{<:Number, <:Number} = (0, 1))
     key = (n, s)
     if haskey(rules, key)
         data = rules[(n, s)]
         Δx = domain[2] - domain[1]
         # Transformed nodes and weights
-        X = @. domain[1] + Δx * data.X 
+        X = @. domain[1] + Δx * data.X
         W = copy(data.W)
         for d in 1:(2s+1)
             W[:,d] *= Δx^d
@@ -51,15 +63,18 @@ function GaussTuranRule(n::Int, s::Int; domain::Tuple{<:Number, <:Number} = (0, 
     end
 end
 
-function (I::GaussTuranRule)(f)
+function (I::GaussTuranRule)(f::F) where {F}
     (; a, b, W, X) = I
+    return evalrule(f, W, X, a, b)
+end
+
+function evalrule(f, W, X, a, b)
     out = zero(eltype(X))
     for (i, x) in enumerate(X)
         derivs = f(x)
         @assert length(derivs) == n_derivs(I)
-        for (m, deriv) in enumerate(f(x))
+        for (m, deriv) in enumerate(derivs)
             out += W[i, m] * deriv
         end
     end
-    out
 end
