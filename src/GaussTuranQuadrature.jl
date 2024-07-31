@@ -13,5 +13,6 @@ include("rules.jl")
 include("rule_evaluation.jl")
 
 export GaussTuranRule, GaussTuranComputeRule
+export TaylorDiffIntegrand
 
 end # module GaussTuranQuadrature

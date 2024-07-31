@@ -44,7 +44,8 @@ function Base.show(io::IO, I::GaussTuranRule)
     println(io, "* Weights:\n$W_string")
 end
 
-n_derivs(I::GaussTuranRule) = size(I.W)[2]
+n_derivs(I::GaussTuranRule) = _n_derivs(I.W)
+_n_derivs(W) = size(W, 2)
 
 function GaussTuranRule(n::Integer, s::Integer; domain::Tuple{<:Number, <:Number} = (0, 1))
     key = (n, s)
@@ -69,12 +70,36 @@ function (I::GaussTuranRule)(f::F) where {F}
 end
 
 function evalrule(f, W, X, a, b)
-    out = zero(eltype(X))
-    for (i, x) in enumerate(X)
+    # unroll first iteration to get right type of integrand
+    x0, rest = Iterators.peel(X)
+    derivs0 = f(x0)
+    @assert length(derivs0) == _n_derivs(W)
+    deriv0, drest = Iterators.peel(derivs0)
+    out = W[1,1] * deriv0
+    for (_m, d0) in enumerate(drest)
+        out += W[1,_m+1] * d0
+    end
+    # remaining points
+    for (_i, x) in enumerate(rest)
+        i = _i + 1
         derivs = f(x)
-        @assert length(derivs) == n_derivs(I)
         for (m, deriv) in enumerate(derivs)
             out += W[i, m] * deriv
         end
     end
+    return out
 end
+
+"""
+    TaylorDiffIntegrand(f, order=nothing)
+
+Construct an integrand from `f` for use with [`GaussTuranRule`](@ref) having derivatives
+computed automatically using TaylorDiff.jl.
+The second argument `order` should be `Val(2s+1)`, where `s` is the derivative order of the Gauss-Turán rule.
+This functionality is implemented in a package extension requiring `using TaylorDiff`
+"""
+struct TaylorDiffIntegrand{F,N}
+    f::F
+    order::N
+end
+TaylorDiffIntegrand(f) = TaylorDiffIntegrand(f, nothing)
