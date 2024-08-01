@@ -103,7 +103,7 @@ function GaussTuranRule(res, cache::GaussTuranCache{T}, dϕ) where {T}
 end
 
 """
-    GaussTuran(ϕ, n, s; ε = nothing, X₀ = nothing, optimization_options::Optim.Options = Optim.Options())
+    GaussTuranComputeRule(ϕ, n, s; ε = nothing, X₀ = nothing, optimization_options::Optim.Options = Optim.Options())
 
 Compute a Gauss-Turán quadrature rule by solving a constrained non-linear optimization problem.
 For details about the method see (_reference to theory_).
@@ -159,7 +159,7 @@ function GaussTuranQuadrature.GaussTuranComputeRule(
     cache = GaussTuranCache(n, s, N, ε, rhs_upper, rhs_lower)
 
     # The function whose root defines the quadrature rule
-    # Note: the optimization method requires a Hessian, 
+    # Note: the optimization method requires a Hessian,
     # which brings the highest order derivative required to 2s + 2
     func(ΔX) = GaussTuranLoss!(ϕ, ΔX, cache)
     dϕ = TwiceDifferentiable(func, ΔX₀; autodiff = :forward)
@@ -191,4 +191,33 @@ function GaussTuranQuadrature.GaussTuranComputeRule(
     GaussTuranRule(res, cache, dϕ), res
 end
 
-end # module IntegralsGaussTuranExt
+function GaussTuranQuadrature.GaussTuranComputeRule(::Type{T}, n::Int, s::Int; kws...) where {T}
+    rhs = inv.(T.(1:(2 * (s + 1) * n + 1))) # 1 ./ collect(range(one(T), T(2 * (s + 1) * n + 1)))
+    ϕ = let v = Val(2s + 1)
+        (x, j) -> begin
+            let j=j, ix = inv(x), _f = x^(j-1)*one(ix)*1
+                ntuple(v) do n
+                    __f = _f
+                    _f *= ix * (j-n+1)
+                    return __f
+                end
+            end
+        end
+        # derivatives(x -> x^(j - 1), x, one(T), Val(2s + 1)).value
+    end
+    GaussTuranComputeRule(ϕ,
+        n,
+        s,
+        rhs,
+        optimization_options = Optim.Options(;
+            x_abstol = T(1e-250),
+            g_tol = T(1e-250),
+            show_trace = true,
+            show_every = 1_000,
+            iterations = 10_000
+        ), kws...
+    )
+end
+
+
+end
