@@ -9,6 +9,7 @@ function (I::GaussTuranRule)(f::TaylorDiffIntegrand)
     order = f.order === nothing ? Val(n_derivs(I)) :
             f.order isa Integer ? Val(f.order) :
             f.order
-    return evalrule(x -> value(derivatives(_f, x, 1, order)), W, X, a, b)
+    __f = order isa Val{1} ? x -> (_f(x),) : x -> value(derivatives(_f, x, 1, order))
+    return evalrule(__f, W, X, a, b)
 end
 end
