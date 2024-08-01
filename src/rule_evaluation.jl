@@ -1,3 +1,15 @@
+"""
+    GaussTuranRule(W::AbstractMatrix, X::AbstractVector; domain=(0,1))
+    GaussTuranRule(n::Integer, s::Integer; domain=(0,1))
+
+Construct a Gauss-Turán quadrature for the given interval either from known weights `X` and
+nodes `X` (assumed to be in the interval (0, 1)) or for a fixed number of nodes `n` and derivatives `s`.
+
+    (::GaussTuranRule)(f)
+
+Evaluate the integral of the function `f` using a computed Gauss-Turán rule. `f(x)` must return
+a tuple or vector of the integrand and its first `2s+1` derivatives.
+"""
 struct GaussTuranRule{
     WType <: AbstractMatrix, XType <: AbstractVector, xType <: AbstractFloat}
     a::xType
@@ -32,34 +44,65 @@ function Base.show(io::IO, I::GaussTuranRule)
     println(io, "* Weights:\n$W_string")
 end
 
-n_derivs(I::GaussTuranRule) = size(I.W)[2]
+n_derivs(I::GaussTuranRule) = _n_derivs(I.W)
+_n_derivs(W) = size(W, 2)
 
-function GaussTuranRule(n::Int, s::Int; domain::Tuple{<:Number, <:Number} = (0, 1))
-    key = (n, s)
-    if haskey(rules, key)
-        data = rules[(n, s)]
-        Δx = domain[2] - domain[1]
-        # Transformed nodes and weights
-        X = @. domain[1] + Δx * data.X 
-        W = copy(data.W)
-        for d in 1:(2s+1)
-            W[:,d] *= Δx^d
-        end
-        return GaussTuranRule(W, X; domain)
-    else
-        error("No tabulated rule for n = $n, s = $s.")
-    end
+function GaussTuranRule(n::Integer, s::Integer; domain::Tuple{<:Number, <:Number} = (0, 1))
+    dom = promote(domain...)
+    Δx = dom[2] - dom[1]
+    T = typeof(float(real(one(Δx))))
+    Q = cachedrule(T, Int(n), Int(s))
+    return GaussTuranRule(Q.W, Q.X; domain=dom)
 end
 
-function (I::GaussTuranRule)(f)
+# use a generated function to make this type-stable
+@generated function cachedrule(::Type{TF}, n::Int, s::Int) where {TF}
+    cache = haskey(rules, TF) ? rules[TF] : (rules[TF] = Dict{Tuple{Int, Int}, @NamedTuple{X::Vector{TF}, W::Matrix{TF}}}())
+    :(haskey($cache, (n, s)) ? $cache[(n, s)] : ($cache[(n, s)] = begin Q = GaussTuranComputeRule(TF, n, s)[1]; (; X=Q.X, W=Q.W) end))
+end
+
+function (I::GaussTuranRule)(f::F) where {F}
     (; a, b, W, X) = I
-    out = zero(eltype(X))
-    for (i, x) in enumerate(X)
-        derivs = f(x)
-        @assert length(derivs) == n_derivs(I)
-        for (m, deriv) in enumerate(f(x))
-            out += W[i, m] * deriv
+    return evalrule(f, W, X, a, b)
+end
+
+function evalrule(f, W, X, a, b)
+    # unroll first iteration to get right type of integrand
+    len = b - a
+    x0, rest = Iterators.peel(X)
+    derivs0 = f(a + x0*len)
+    @assert length(derivs0) == _n_derivs(W)
+    deriv0, drest = Iterators.peel(derivs0)
+    _len = len
+    out = W[1,1] * deriv0 * _len
+    _len *= len
+    for (_m, d0) in enumerate(drest)
+        out += W[1,_m+1] * d0 * _len
+        _len *= len
+    end
+    # remaining points
+    for (_i, x) in enumerate(rest)
+        i = _i + 1
+        derivs = f(a + x*len)
+        _len = len
+        for (m, deriv) in enumerate(derivs)
+            out += W[i, m] * deriv * _len
+            _len *= len
         end
     end
-    out
+    return out
 end
+
+"""
+    TaylorDiffIntegrand(f, order=nothing)
+
+Construct an integrand from `f` for use with [`GaussTuranRule`](@ref) having derivatives
+computed automatically using TaylorDiff.jl.
+The second argument `order` should be `Val(2s+1)`, where `s` is the derivative order of the Gauss-Turán rule.
+This functionality is implemented in a package extension requiring `using TaylorDiff`
+"""
+struct TaylorDiffIntegrand{F,N}
+    f::F
+    order::N
+end
+TaylorDiffIntegrand(f) = TaylorDiffIntegrand(f, nothing)

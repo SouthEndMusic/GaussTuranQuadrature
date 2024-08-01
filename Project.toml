@@ -5,14 +5,28 @@ version = "0.1.0"
 [weakdeps]
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
+TaylorDiff = "b36ab563-344f-407b-a36a-4f200bebf99c"
 
 [extensions]
 GaussTuranQuadratureComputeRulesExt = ["Optim", "PreallocationTools"]
+GaussTuranQuadratureTaylorDiffExt = "TaylorDiff"
+
+[compat]
+Aqua = "0.8"
+Optim = "1"
+PreallocationTools = "0.4"
+SafeTestsets = "0.1"
+TaylorDiff = "0.2"
+Test = "1.9"
+julia = "1.9"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+TaylorDiff = "b36ab563-344f-407b-a36a-4f200bebf99c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "SafeTestsets", "Test"]
+test = ["Aqua", "SafeTestsets", "Test", "TaylorDiff", "Optim", "PreallocationTools"]
