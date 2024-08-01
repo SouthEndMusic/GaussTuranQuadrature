@@ -3,7 +3,7 @@
     GaussTuranRule(n::Integer, s::Integer; domain=(0,1))
 
 Construct a Gauss-Turán quadrature for the given interval either from known weights `X` and
-nodes `X` or for a fixed number of nodes `n` and derivatives `s`.
+nodes `X` (assumed to be in the interval (0, 1)) or for a fixed number of nodes `n` and derivatives `s`.
 
     (::GaussTuranRule)(f)
 
@@ -58,7 +58,7 @@ end
 # use a generated function to make this type-stable
 @generated function cachedrule(::Type{TF}, n::Int, s::Int) where {TF}
     cache = haskey(rules, TF) ? rules[TF] : (rules[TF] = Dict{Tuple{Int, Int}, @NamedTuple{X::Vector{TF}, W::Matrix{TF}}}())
-    :(haskey($cache, (n, s)) ? $cache[(n, s)] : ($cache[(n, s)] = GaussTuranComputeRule(TF, n, s)[1]))
+    :(haskey($cache, (n, s)) ? $cache[(n, s)] : ($cache[(n, s)] = begin Q = GaussTuranComputeRule(TF, n, s)[1]; (; X=Q.X, W=Q.W) end))
 end
 
 function (I::GaussTuranRule)(f::F) where {F}
@@ -68,20 +68,26 @@ end
 
 function evalrule(f, W, X, a, b)
     # unroll first iteration to get right type of integrand
+    len = b - a
     x0, rest = Iterators.peel(X)
-    derivs0 = f(x0)
+    derivs0 = f(a + x0*len)
     @assert length(derivs0) == _n_derivs(W)
     deriv0, drest = Iterators.peel(derivs0)
-    out = W[1,1] * deriv0
+    _len = len
+    out = W[1,1] * deriv0 * _len
+    _len *= len
     for (_m, d0) in enumerate(drest)
-        out += W[1,_m+1] * d0
+        out += W[1,_m+1] * d0 * _len
+        _len *= len
     end
     # remaining points
     for (_i, x) in enumerate(rest)
         i = _i + 1
-        derivs = f(x)
+        derivs = f(a + x*len)
+        _len = len
         for (m, deriv) in enumerate(derivs)
-            out += W[i, m] * deriv
+            out += W[i, m] * deriv * _len
+            _len *= len
         end
     end
     return out
