@@ -48,20 +48,17 @@ n_derivs(I::GaussTuranRule) = _n_derivs(I.W)
 _n_derivs(W) = size(W, 2)
 
 function GaussTuranRule(n::Integer, s::Integer; domain::Tuple{<:Number, <:Number} = (0, 1))
-    key = (n, s)
-    if haskey(rules, key)
-        data = rules[(n, s)]
-        Δx = domain[2] - domain[1]
-        # Transformed nodes and weights
-        X = @. domain[1] + Δx * data.X
-        W = copy(data.W)
-        for d in 1:(2s+1)
-            W[:,d] *= Δx^d
-        end
-        return GaussTuranRule(W, X; domain)
-    else
-        error("No tabulated rule for n = $n, s = $s.")
-    end
+    dom = promote(domain...)
+    Δx = dom[2] - dom[1]
+    T = typeof(float(real(one(Δx))))
+    Q = cachedrule(T, Int(n), Int(s))
+    return GaussTuranRule(Q.W, Q.X; domain=dom)
+end
+
+# use a generated function to make this type-stable
+@generated function cachedrule(::Type{TF}, n::Int, s::Int) where {TF}
+    cache = haskey(rules, TF) ? rules[TF] : (rules[TF] = Dict{Tuple{Int, Int}, @NamedTuple{X::Vector{TF}, W::Matrix{TF}}}())
+    :(haskey($cache, (n, s)) ? $cache[(n, s)] : ($cache[(n, s)] = GaussTuranComputeRule(TF, n, s)[1]))
 end
 
 function (I::GaussTuranRule)(f::F) where {F}
